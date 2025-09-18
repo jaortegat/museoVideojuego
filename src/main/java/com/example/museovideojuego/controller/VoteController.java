@@ -191,10 +191,19 @@ public class VoteController {
         java.util.Map<String, java.util.List<PlayerScore>> leaderboards = new java.util.LinkedHashMap<>();
         for (String game : videogames) {
             java.util.List<PlayerScore> top = playerScoreRepository.findByVideogameOrderByScoreDesc(game);
+            // limit to top 10
+            if (top.size() > 10) {
+                top = top.subList(0, 10);
+            }
             leaderboards.put(game, top);
         }
         model.addAttribute("leaderboards", leaderboards);
         return "results";
+    }
+
+    @GetMapping("/admin")
+    public String adminPage() {
+        return "admin";
     }
 
     @PostMapping("/side-action")

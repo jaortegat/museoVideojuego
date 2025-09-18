@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+  <body>
+    <div th:fragment="dualTitles">
+      <div class="row w-100">
+        <div class="col-12 mb-3">
+          <div class="d-flex justify-content-between align-items-center">
+            <h1 class="mb-0" th:text="#{title.left}">Left</h1>
+            <h1 class="mb-0" th:text="#{title.right}">Right</h1>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

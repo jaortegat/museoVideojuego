@@ -8,14 +8,8 @@
 </head>
 <body class="bg-light">
     <div class="container-fluid px-3 full-height-container">
-        <div class="row w-100">
-            <!-- Titles row: left and right headings aligned at same height -->
-            <div class="col-12 mb-3">
-                <div class="d-flex justify-content-between align-items-center">
-                    <h1 class="mb-0">Hall of Fame</h1>
-                    <h1 class="mb-0">High Score</h1>
-                </div>
-            </div>
+        <!-- Titles fragment -->
+        <div th:replace="fragments/titles :: dualTitles"></div>
 
             <!-- Content row: left vote cards and right form card -->
             <div class="col-12">

@@ -8,7 +8,8 @@
 </head>
 <body class="bg-light">
     <div class="container-fluid px-3 full-height-container">
-        <h1 class="text-center mb-4">Resultados de la Votación</h1>
+    <!-- Titles fragment -->
+    <div th:replace="fragments/titles :: dualTitles"></div>
 
         <div th:if="${playerName != null}">
             <h3 class="mb-3">Jugador: <span th:text="${playerName}"></span></h3>
@@ -32,31 +33,32 @@
     <div class="row g-3">
         <div class="col-12 col-md-6">
                 <div class="card shadow-sm p-3 h-100">
-                    <h4 class="mb-3">Votos por consola</h4>
             <canvas id="consolePie" style="height:70vh; width:100%"></canvas>
                 </div>
             </div>
 
     <div class="col-12 col-md-6">
                 <div class="card shadow-sm p-3 h-100">
-                    <h4 class="mb-3">Clasificaciones por juego</h4>
-                    <div th:each="game : ${videogames}">
-                        <h6 class="mb-1" th:text="${game}"></h6>
-                        <div class="table-responsive mb-2">
-                            <table class="table table-sm table-striped">
-                                <thead>
-                                    <tr><th>Jugador</th><th>Puntos</th></tr>
-                                </thead>
-                                <tbody>
-                                    <tr th:each="ps : ${leaderboards[game]}">
-                                        <td th:text="${ps.playerName}"></td>
-                                        <td th:text="${ps.score}"></td>
-                                    </tr>
-                                    <tr th:if="${leaderboards[game] == null or #lists.isEmpty(leaderboards[game])}">
-                                        <td colspan="2">Sin puntuaciones</td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                    <div class="row">
+                        <!-- Each game's leaderboard is a single column so columns flow left-to-right and wrap every 3 on md+ -->
+                        <div class="col-12 col-sm-6 col-md-4 mb-3" th:each="game : ${videogames}">
+                            <h6 class="mb-1"><span class="visually-hidden">Juego:</span> <span th:text="${game}"></span></h6>
+                            <div class="table-responsive mb-2">
+                                <table class="table table-sm table-striped">
+                                    <thead>
+                                        <tr><th>Jugador</th><th>Puntos</th></tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr th:each="ps : ${leaderboards[game]}">
+                                            <td th:text="${ps.playerName}"></td>
+                                            <td th:text="${ps.score}"></td>
+                                        </tr>
+                                        <tr th:if="${leaderboards[game] == null or #lists.isEmpty(leaderboards[game])}">
+                                            <td colspan="2">Sin puntuaciones</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </div>
