@@ -1,0 +1,17 @@
+{
+  "groups": [
+    {
+      "name": "",
+      "type": "com.example.museovideojuego.config.ConsoleConfig",
+      "sourceType": "com.example.museovideojuego.config.ConsoleConfig"
+    }
+  ],
+  "properties": [
+    {
+      "name": "consoles",
+      "type": "java.util.List<com.example.museovideojuego.config.ConsoleConfig$Console>",
+      "sourceType": "com.example.museovideojuego.config.ConsoleConfig"
+    }
+  ],
+  "hints": []
+}

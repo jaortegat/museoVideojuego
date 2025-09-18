@@ -1,0 +1,82 @@
+        /* Ensure the page fills the viewport and disable body vertical scroll */
+        html, body {
+            height: 100%;
+            margin: 0;
+            overflow: hidden; /* prevent page scroll */
+        }
+        /* Container fills viewport and arranges content with flex */
+        .full-height-container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: stretch;
+            padding-top: 1.5rem;
+            padding-bottom: 1.5rem;
+        }
+        /* Make the grid of cards scroll internally if content exceeds available area */
+        /* No internal scrolling: ensure all content fits by shrinking elements */
+        .cards-wrapper {
+            overflow: visible; /* don't show internal scroll */
+            max-height: none;
+            padding-right: 0;
+        }
+        /* Reduce image height so more cards fit in viewport without scrolling */
+        .card-img-top {
+            max-height: 48px; /* reduced image height for dense grid */
+            width: auto;
+            object-fit: contain;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        /* Further reduce spacing between cards and compact paddings */
+        .g-4 {
+            gap: 0.25rem !important;
+        }
+        .full-height-container {
+            padding-top: 0.75rem;
+            padding-bottom: 0.75rem;
+        }
+        .card.p-2 {
+            padding: 0.5rem !important;
+        }
+        h1 { margin-bottom: 0.5rem !important; }
+        .card {
+            cursor: pointer;
+        }
+        .card-body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        .card.selected {
+            border: 2px solid #0d6efd;
+        }
+        /* Make interactive cards keyboard-accessible by styling button elements used as cards */
+        .card-select {
+            border: 1px solid #ced4da; /* slightly darker gray */
+            background: transparent;
+            padding: 0.25rem;
+            text-align: inherit;
+            border-radius: 0.25rem;
+            width: 100%;           /* make all card buttons same width */
+            box-sizing: border-box;
+            display: inline-block;
+        }
+        .card-select:focus {
+            outline: 3px solid rgba(13,110,253,0.25);
+            outline-offset: 2px;
+        }
+        .card-select:hover {
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        /* keep selected blue border */
+        .card-select.selected, .card.selected {
+            border: 2px solid #0d6efd !important;
+        }
+
+        /* Reduce bottom spacing under console names and compact card body */
+        .card-body { padding-top: 0.25rem; padding-bottom: 0.25rem; }
+        .card-title { margin-bottom: 0.25rem; }
