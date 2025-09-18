@@ -41,7 +41,7 @@
                 <div class="card shadow-sm p-3 h-100">
                     <div class="row">
                         <!-- Each game's leaderboard is a single column so columns flow left-to-right and wrap every 3 on md+ -->
-                        <div class="col-12 col-sm-6 col-md-4 mb-3" th:each="game : ${videogames}">
+                        <div class="col-12 col-sm-6 col-md-4 mb-3" th:each="game : ${videogames}" th:attr="data-game=${game}">
                             <h6 class="mb-1"><span class="visually-hidden">Juego:</span> <span th:text="${game}"></span></h6>
                             <div class="table-responsive mb-2">
                                 <table class="table table-sm table-striped">
@@ -149,6 +149,33 @@
                 }
             }).catch(function(e){ console.warn('Failed to preload results', e); });
 
+            // load leaderboards for each game from server so DB contents appear immediately
+            document.querySelectorAll('.col-12.col-sm-6.col-md-4').forEach(function(col){
+                var game = col.getAttribute('data-game');
+                if (!game) return;
+                fetch('/api/leaderboard?game=' + encodeURIComponent(game)).then(function(r){ return r.json(); }).then(function(json){
+                    if (!json || !Array.isArray(json.top)) return;
+                    var tbody = col.querySelector('tbody');
+                    if (!tbody) return;
+                    // clear existing
+                    while (tbody.firstChild) tbody.removeChild(tbody.firstChild);
+                    if (json.top.length === 0) {
+                        var er = document.createElement('tr');
+                        var td = document.createElement('td'); td.setAttribute('colspan','2'); td.textContent = 'Sin puntuaciones';
+                        er.appendChild(td);
+                        tbody.appendChild(er);
+                    } else {
+                        json.top.forEach(function(item){
+                            var tr = document.createElement('tr');
+                            var p = document.createElement('td'); p.textContent = item.player || '';
+                            var s = document.createElement('td'); s.textContent = item.score;
+                            tr.appendChild(p); tr.appendChild(s);
+                            tbody.appendChild(tr);
+                        });
+                    }
+                }).catch(function(e){ console.warn('Failed to load leaderboard for', game, e); });
+            });
+
             // SSE updates: update chart when vote arrives
             if (!!window.EventSource) {
                 var es = new EventSource('/results-stream');
@@ -181,6 +208,47 @@
                         chart.update();
                     } catch(e) { console.warn('Invalid SSE payload', evt.data); }
                 });
+                    // listen for live score events and update leaderboards
+                    es.addEventListener('score', function(evt){
+                        try {
+                            var data = JSON.parse(evt.data);
+                            var game = (data.videogame || '').toString().trim().toLowerCase();
+                            var player = data.player;
+                            var score = data.score;
+                            // find the leaderboard column whose heading text matches the videogame
+                            var cols = document.querySelectorAll('.col-12.col-sm-6.col-md-4');
+                            for (var i = 0; i < cols.length; i++) {
+                                var col = cols[i];
+                                var dataGame = col.getAttribute('data-game') || '';
+                                dataGame = dataGame.toString().trim().toLowerCase();
+                                if (dataGame === game) {
+                                    // fetch updated top-10 for this game from server and replace tbody
+                                    fetch('/api/leaderboard?game=' + encodeURIComponent(data.videogame)).then(function(r){ return r.json(); }).then(function(json){
+                                        if (!json || !Array.isArray(json.top)) return;
+                                        var tbody = col.querySelector('tbody');
+                                        if (!tbody) return;
+                                        // clear existing rows
+                                        while (tbody.firstChild) tbody.removeChild(tbody.firstChild);
+                                        if (json.top.length === 0) {
+                                            var er = document.createElement('tr');
+                                            var td = document.createElement('td'); td.setAttribute('colspan','2'); td.textContent = 'Sin puntuaciones';
+                                            er.appendChild(td);
+                                            tbody.appendChild(er);
+                                        } else {
+                                            json.top.forEach(function(item){
+                                                var tr = document.createElement('tr');
+                                                var p = document.createElement('td'); p.textContent = item.player || '';
+                                                var s = document.createElement('td'); s.textContent = item.score;
+                                                tr.appendChild(p); tr.appendChild(s);
+                                                tbody.appendChild(tr);
+                                            });
+                                        }
+                                    }).catch(function(e){ console.warn('Failed to fetch leaderboard', e); });
+                                    break;
+                                }
+                            }
+                        } catch (e) { console.warn('Invalid score SSE payload', evt.data); }
+                    });
                 es.onerror = function(e){ console.warn('SSE error', e); };
             }
         })();

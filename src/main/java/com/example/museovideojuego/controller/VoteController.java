@@ -239,6 +239,13 @@ public class VoteController {
             if (s != null && i < videogames.size()) {
                 PlayerScore ps = new PlayerScore(playerName == null ? "" : playerName, videogames.get(i), s);
                 playerScoreRepository.save(ps);
+                // broadcast the new score so results page can update live
+                try {
+                    voteSseService.broadcastScore(videogames.get(i), ps.getPlayerName(), ps.getScore());
+                    logger.info("Broadcasted SSE score for videogame='{}' player='{}' score={}", videogames.get(i), ps.getPlayerName(), ps.getScore());
+                } catch (Exception ex) {
+                    logger.warn("Failed to broadcast score SSE: {}", ex.getMessage());
+                }
             }
         }
 
@@ -247,6 +254,65 @@ public class VoteController {
         redirectAttributes.addFlashAttribute("playerScores", scores);
 
         return "redirect:/results";
+    }
+
+    // JSON API to submit player scores without redirect
+    @PostMapping(path = "/api/scores", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public ResponseEntity<?> apiSubmitScores(@RequestBody java.util.Map<String,Object> body) {
+        Object playerObj = body.get("playerName");
+        String playerName = playerObj == null ? "" : playerObj.toString();
+        Object scoresObj = body.get("scores");
+        java.util.List<Integer> scores = new java.util.ArrayList<>();
+        if (scoresObj instanceof java.util.List) {
+            @SuppressWarnings("unchecked")
+            java.util.List<Object> raw = (java.util.List<Object>) scoresObj;
+            for (Object o : raw) {
+                if (o == null) { scores.add(null); continue; }
+                try {
+                    if (o instanceof Number) {
+                        scores.add(((Number) o).intValue());
+                    } else {
+                        scores.add(Integer.parseInt(o.toString()));
+                    }
+                } catch (Exception e) { scores.add(null); }
+            }
+        }
+
+        logger.info("Received api scores from player='{}' scores={}", playerName, scores);
+
+        // Persist player scores as in side-action
+        java.util.List<String> videogames = List.of();
+        if (videogamesProp != null && !videogamesProp.trim().isEmpty()) {
+            videogames = List.of(videogamesProp.split("\\s*,\\s*"));
+        }
+        for (int i = 0; i < scores.size(); i++) {
+            Integer s = scores.get(i);
+            if (s != null && i < videogames.size()) {
+                PlayerScore ps = new PlayerScore(playerName == null ? "" : playerName, videogames.get(i), s);
+                playerScoreRepository.save(ps);
+                try {
+                    voteSseService.broadcastScore(videogames.get(i), ps.getPlayerName(), ps.getScore());
+                    logger.info("Broadcasted SSE score for videogame='{}' player='{}' score={}", videogames.get(i), ps.getPlayerName(), ps.getScore());
+                } catch (Exception ex) {
+                    logger.warn("Failed to broadcast score SSE: {}", ex.getMessage());
+                }
+            }
+        }
+
+        return ResponseEntity.ok(java.util.Map.of("status","ok"));
+    }
+
+    @GetMapping(path = "/api/leaderboard", produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public ResponseEntity<?> apiLeaderboard(@RequestParam(name = "game") String game) {
+        java.util.List<PlayerScore> top = playerScoreRepository.findByVideogameOrderByScoreDesc(game);
+        if (top.size() > 10) top = top.subList(0, 10);
+        java.util.List<java.util.Map<String,Object>> out = new java.util.ArrayList<>();
+        for (PlayerScore ps : top) {
+            out.add(java.util.Map.of("player", ps.getPlayerName(), "score", ps.getScore()));
+        }
+        return ResponseEntity.ok(java.util.Map.of("game", game, "top", out));
     }
 
     // Admin endpoint to reset the database (clears votes and player scores)

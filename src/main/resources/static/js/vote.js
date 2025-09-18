@@ -68,10 +68,58 @@
         });
     }
 
+    function submitScores(e) {
+        if (e && e.preventDefault) e.preventDefault();
+        var form = document.getElementById('sideForm');
+        if (!form) return;
+        // Build JSON payload: playerName and scores[] by reading inputs named scores[...] in order
+        var payload = { playerName: '', scores: [] };
+        var pn = form.querySelector('#playerName');
+        if (pn) payload.playerName = pn.value || '';
+        // gather score inputs in DOM order
+        form.querySelectorAll('input[name^="scores"]').forEach(function(inp){
+            var v = inp.value;
+            if (v === null || v === undefined || v === '') {
+                payload.scores.push(null);
+            } else {
+                var n = parseInt(v, 10);
+                payload.scores.push(isNaN(n) ? null : n);
+            }
+        });
+
+        fetch('/api/scores', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        }).then(function(resp){
+            if (resp.ok) {
+                // clear form fields
+                form.reset();
+                // show brief visual confirmation on the button
+                var btn = form.querySelector('.btn');
+                if (btn) {
+                    var old = btn.textContent;
+                    btn.textContent = 'Enviado';
+                    setTimeout(function(){ btn.textContent = old; }, 1400);
+                }
+            } else {
+                alert('Error al enviar las puntuaciones');
+            }
+        }).catch(function(){
+            alert('No se pudo conectar con el servidor');
+        });
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
         // Expose functions to global scope only as needed for inline handlers
         window.toggleSelection = toggleSelection;
         window.validateAndSubmit = validateAndSubmit;
+
+            // intercept the sideForm submit to send via AJAX and clear the form
+            var sideForm = document.getElementById('sideForm');
+            if (sideForm) {
+                sideForm.addEventListener('submit', submitScores);
+            }
 
         updateInstruction();
         updateSelectionCount();
