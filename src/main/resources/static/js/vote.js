@@ -5,7 +5,7 @@
 
     function updateInstruction() {
         var instr = document.getElementById('maxVotesInstruction');
-        if (instr) instr.textContent = 'Selecciona hasta ' + MAX_VOTES + ' consola(s).';
+        if (instr) instr.textContent = 'Selecciona hasta ' + MAX_VOTES + ' consola(s)';
     }
 
     function toggleSelection(card) {
@@ -20,7 +20,7 @@
             card.classList.add('selected');
             card.setAttribute('aria-pressed', 'true');
         } else {
-            alert('Solo puedes seleccionar hasta ' + MAX_VOTES + ' consola(s).');
+            alert('Solo puedes seleccionar hasta ' + MAX_VOTES + ' consola(s)');
         }
         updateSelectionCount();
     }
@@ -36,13 +36,36 @@
             return;
         }
         if (selectedConsoles.size > MAX_VOTES) {
-            alert('Solo puedes seleccionar hasta ' + MAX_VOTES + ' consola(s).');
+            alert('Solo puedes seleccionar hasta ' + MAX_VOTES + ' consola(s)');
             return;
         }
-        var input = document.getElementById('selectedConsoles');
-        if (input) input.value = Array.from(selectedConsoles).join(',');
-        var form = document.getElementById('voteForm');
-        if (form) form.submit();
+        var payload = { selectedConsoles: Array.from(selectedConsoles) };
+        fetch('/api/vote', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        }).then(function(resp){
+            if (resp.ok) {
+                // clear selections and update UI
+                selectedConsoles.clear();
+                document.querySelectorAll('.card-select.selected').forEach(function(el){
+                    el.classList.remove('selected');
+                    el.setAttribute('aria-pressed','false');
+                });
+                updateSelectionCount();
+                // brief visual confirmation
+                var btn = document.querySelector('#voteForm .btn');
+                if (btn) {
+                    var old = btn.textContent;
+                    btn.textContent = 'Enviado';
+                    setTimeout(function(){ btn.textContent = old; }, 1400);
+                }
+            } else {
+                alert('Error al enviar el voto');
+            }
+        }).catch(function(){
+            alert('No se pudo conectar con el servidor');
+        });
     }
 
     document.addEventListener('DOMContentLoaded', function() {

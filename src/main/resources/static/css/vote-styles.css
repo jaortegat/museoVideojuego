@@ -2,19 +2,33 @@
 
     /* Ensure the page fills the viewport and disable body vertical scroll */
         html, body {
-            height: 100%;
-            margin: 0;
-            overflow: hidden; /* prevent page scroll */
-        }
+                height: 100%;
+                margin: 0;
+                overflow: auto; /* allow scrolling; horizontal scrollbar will appear if necessary */
+            }
         /* Container fills viewport and arranges content with flex */
         .full-height-container {
             min-height: 100vh;
             display: flex;
             flex-direction: column;
-            justify-content: center;
+            justify-content: flex-start; /* allow content to grow and produce vertical scroll */
             align-items: stretch;
             padding-top: 1.5rem;
             padding-bottom: 1.5rem;
+        }
+
+        /* On larger screens keep vertical centering to match previous visual layout */
+        @media (min-width: 992px) {
+            .full-height-container { justify-content: center; }
+        }
+
+        /* Small screens: allow the page to grow and show vertical scroll */
+        @media (max-width: 991.98px) {
+            html, body { height: auto; }
+            .full-height-container { min-height: auto; padding-top: 0.5rem; padding-bottom: 0.5rem; }
+            .card.h-100 { height: auto !important; }
+            /* Reduce chart height on small screens so header and tables can fit and page scrolls naturally */
+            #consolePie { height: 50vh !important; max-height: 60vh; }
         }
         /* Make the grid of cards scroll internally if content exceeds available area */
         /* No internal scrolling: ensure all content fits by shrinking elements */

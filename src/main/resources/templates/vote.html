@@ -2,6 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org" lang="es">
 <head>
     <title>Votación</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="/css/vote-styles.css" rel="stylesheet">
 </head>
@@ -34,7 +35,8 @@
                                             </button>
                                     </div>
                                 </div>
-                                <input type="hidden" name="selectedConsoles" id="selectedConsoles">
+                                <!-- Hidden input not used by JS API submit; kept for graceful fallback -->
+                                <input type="hidden" name="selectedConsoles" id="selectedConsoles" style="display:none;">
                                 <div class="text-center mt-3">
                                     <p id="maxVotesInstruction" class="mb-1"></p>
                                     <small id="selectionCount" class="d-block mb-2">0/0</small>
@@ -47,7 +49,7 @@
                     <!-- Right column (narrower) -->
                     <div class="col-12 col-md-3 mt-3 mt-md-0">
                         <div class="card shadow-sm p-2 h-100">
-                            <form id="sideForm" th:action="@{/side-action}" method="post">
+                            <form id="sideForm" th:action="@{/side-action}" method="post" class="d-flex flex-column h-100">
                                 <div class="mb-4">
                                     <label for="playerName" class="form-label pixel-title"><strong>Player</strong></label>
                                     <input type="text" class="form-control" id="playerName" name="playerName" placeholder="Nombre del jugador">
@@ -70,7 +72,7 @@
                                     </div>
                                 </div>
 
-                                <div class="d-grid">
+                                <div class="text-center mt-auto">
                                     <button type="submit" class="btn btn-primary">Enviar</button>
                                 </div>
                             </form>
@@ -85,6 +87,13 @@
         /* Provide MAX_VOTES to the external script */
         window.MAX_VOTES = /*[[${maxVotes}]]*/ 3;
         /*]]>*/
+    </script>
+    <script>
+        // Prevent the form from performing a full-page submit when the user presses Enter
+        document.addEventListener('DOMContentLoaded', function(){
+            var form = document.getElementById('voteForm');
+            if (form) form.addEventListener('submit', function(e){ e.preventDefault(); validateAndSubmit(); });
+        });
     </script>
     <script src="/js/vote.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
