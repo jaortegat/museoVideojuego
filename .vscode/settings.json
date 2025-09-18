@@ -1,7 +1,0 @@
-{
-    "java.project.sourcePaths": [
-        "src/main/java/com/example/museovideojuego/controller",
-        "src/main/java/com/example/museovideojuego/config",
-        "src/main/java/com/example/museovideojuego"
-    ]
-}
