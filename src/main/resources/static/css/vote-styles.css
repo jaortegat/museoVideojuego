@@ -1,4 +1,6 @@
-        /* Ensure the page fills the viewport and disable body vertical scroll */
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+    /* Ensure the page fills the viewport and disable body vertical scroll */
         html, body {
             height: 100%;
             margin: 0;
@@ -69,8 +71,21 @@
             outline: 3px solid rgba(13,110,253,0.25);
             outline-offset: 2px;
         }
+        /* Enhanced hover: slight lift, scale and gentle tint for discoverability */
+        .card-select {
+            transition: transform 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
+            will-change: transform, box-shadow;
+        }
+
         .card-select:hover {
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 6px 18px rgba(13,110,253,0.12);
+            background-color: rgba(13,110,253,0.03);
+        }
+
+        .card-select:active {
+            transform: translateY(-1px) scale(0.995);
+            box-shadow: 0 3px 8px rgba(13,110,253,0.12);
         }
         /* keep selected blue border */
         .card-select.selected, .card.selected {
@@ -80,3 +95,104 @@
         /* Reduce bottom spacing under console names and compact card body */
         .card-body { padding-top: 0.25rem; padding-bottom: 0.25rem; }
         .card-title { margin-bottom: 0.25rem; }
+        /* Apply pixel font to main titles and elements with .pixel-title (force override where needed) */
+        h1, .pixel-title, .form-label.pixel-title {
+            font-family: 'Press Start 2P', 'Courier New', monospace !important;
+        }
+
+        /* Slightly reduce main title size */
+        h1 {
+            font-size: 1.25rem;
+        }
+
+        /* Make pixel titles readable: force uppercase (font lacks lowercase), increase size a bit, and tighten spacing */
+        .pixel-title {
+            font-size: 0.9rem; /* increased for legibility */
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            line-height: 1;
+            display: inline-block; /* prevent inherited line-height issues */
+        }
+
+        /* Slightly larger pixel titles on medium and up screens */
+        @media (min-width: 768px) {
+            .pixel-title { font-size: 1rem; }
+        }
+
+        /* Smaller pixel font for game names so they don't compete with headings */
+        .pixel-title.game-name {
+            font-size: 0.8rem;
+            text-transform: none; /* keep original casing for game titles */
+        }
+
+        /* Space between the Puntuaciones heading and the game list */
+        .mb-1.pixel-title {
+            margin-bottom: 0.5rem !important;
+            display: block;
+        }
+
+        /* Align game name cells with input boxes and remove extra vertical padding */
+        /* Make each table row a flex container so cells stay side-by-side */
+        .table.table-sm tbody tr,
+        .table.table-sm thead tr {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* First cell (game name) grows to fill available space */
+        .table.table-sm tbody tr td:first-child,
+        .table.table-sm thead tr th:first-child {
+            flex: 1 1 auto;
+            min-width: 0; /* allow shrinking */
+        }
+
+        /* Second cell (input) keeps fixed width so it doesn't wrap under the name */
+        .table.table-sm tbody tr td:nth-child(2),
+        .table.table-sm thead tr th:nth-child(2) {
+            flex: 0 0 7rem;
+            width: 7rem;
+        }
+
+        td.pixel-title.game-name {
+            display: flex; /* explicit to ensure pixel-title remains flex */
+            align-items: center;
+            justify-content: flex-start;
+            text-align: left;
+            padding-right: 0.5rem;
+            white-space: normal; /* allow wrapping if needed */
+        }
+
+        /* Ensure inputs inside table cells don't add vertical margins but limit their width so they don't wrap under the name */
+        .table.table-sm td .form-control {
+            margin: 0;
+            width: auto;
+            min-width: 4.5rem;
+            max-width: 6.5rem; /* reasonable small input width for scores */
+        }
+
+    /* (handled above by flex rows) */
+
+        /* Small screens: let inputs stretch full width below the name to keep usability */
+        @media (max-width: 575.98px) {
+            .table.table-sm td {
+                display: block;
+                width: 100%;
+            }
+            .table.table-sm td .form-control { width: 100%; max-width: none; }
+        }
+
+        /* Make small tables borderless to remove the row separator bar */
+        .table.table-sm, .table-responsive table.table-sm {
+            border-collapse: collapse;
+        }
+        .table.table-sm th, .table.table-sm td {
+            border-top: none !important;
+            border-bottom: none !important;
+        }
+
+        /* Ensure any <strong> inside pixel-title inherits the same font (Bootstrap may style <strong> differently) */
+        .pixel-title strong {
+            font-family: inherit;
+            font-weight: normal;
+        }
