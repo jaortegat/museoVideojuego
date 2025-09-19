@@ -251,10 +251,25 @@
             background-color: #000000 !important;
         }
         .leaderboard-table td, .leaderboard-table th { border: none !important; }
-        /* Proportional column widths: ordinal 15%, score 25%, player 60% — adapts with container size */
-        .leaderboard-table thead th.col-ordinal { width: 15%; }
+    /* Proportional column widths: ordinal 10%, score 25%, player 65% — adapts with container size */
+    .leaderboard-table thead th.col-ordinal { width: 10%; }
         .leaderboard-table thead th.col-score { width: 25%; text-align: right; }
-        .leaderboard-table thead th.col-player { width: 60%; text-align: left; }
+    .leaderboard-table thead th.col-player { width: 65%; text-align: left; }
+
+    /* Stronger, cell-level rule to ensure ordinal column is narrow on all screen sizes */
+    .leaderboard-table {
+        table-layout: fixed; /* ensure cell widths are respected */
+    }
+    .leaderboard-table td.ordinal, .leaderboard-table th.col-ordinal {
+        width: 4ch !important; /* very compact but enough for '1ST' */
+        max-width: 4ch !important;
+        padding-left: 0.25rem !important;
+        padding-right: 0.25rem !important;
+        overflow: visible !important; /* let small content be visible */
+        text-overflow: clip !important;
+        white-space: nowrap !important;
+        text-align: left !important;
+    }
 
         /* ordinal styling - use pixel font and uppercase with suffix (1ST, 2ND ...) */
         .leaderboard-table .ordinal {
@@ -284,6 +299,20 @@
             overflow: hidden; /* cut long names */
             white-space: nowrap;
             text-overflow: clip; /* strictly cut after width */
+        }
+
+        /* Ensure the game name shown above each leaderboard uses the pixel font */
+        /* The span in results.html now has classes: pixel-title game-name */
+        .leaderboard-table + .table-responsive, /* fallback selector (no-op) */
+        .col-12 .pixel-title.game-name,
+        .col-12 .pixel-title.game-name + .table-responsive,
+        .col-sm-6 .pixel-title.game-name {
+            font-family: 'Press Start 2P', 'Courier New', monospace !important;
+            font-size: 0.75rem; /* slightly smaller than headings but readable */
+            text-transform: none; /* keep original casing for game titles */
+            display: inline-block;
+            margin-bottom: 0.25rem;
+            letter-spacing: 0.03em;
         }
 
         /* small helper to append the ordinal suffix (ST, ND, RD, TH) using CSS attr fallback: we'll compute suffix in JS when building rows for dynamic content */
