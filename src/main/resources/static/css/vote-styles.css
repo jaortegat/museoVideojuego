@@ -15,17 +15,22 @@
             align-items: stretch;
             padding-top: 1.5rem;
             padding-bottom: 1.5rem;
+            padding-left: 1rem;   /* add horizontal spacing for vote page */
+            padding-right: 1rem;  /* responsive overrides below will adjust on larger/smaller screens */
+            box-sizing: border-box; /* ensure padding doesn't break layout widths */
         }
 
         /* On larger screens keep vertical centering to match previous visual layout */
         @media (min-width: 992px) {
             .full-height-container { justify-content: center; }
+            /* more horizontal breathing room on larger screens */
+            .full-height-container { padding-left: 3rem; padding-right: 3rem; }
         }
 
         /* Small screens: allow the page to grow and show vertical scroll */
         @media (max-width: 991.98px) {
             html, body { height: auto; }
-            .full-height-container { min-height: auto; padding-top: 0.5rem; padding-bottom: 0.5rem; }
+            .full-height-container { min-height: auto; padding-top: 0.5rem; padding-bottom: 0.5rem; padding-left: 0.75rem; padding-right: 0.75rem; }
             .card.h-100 { height: auto !important; }
             /* Reduce chart height on small screens so header and tables can fit and page scrolls naturally */
             #consolePie { height: 50vh !important; max-height: 60vh; }
@@ -53,9 +58,18 @@
         .full-height-container {
             padding-top: 0.75rem;
             padding-bottom: 0.75rem;
+            /* keep lateral padding in denser contexts */
+            padding-left: 1rem;
+            padding-right: 1rem;
         }
         .card.p-2 {
             padding: 0.5rem !important;
+        }
+        /* Visual feedback for invalid score inputs */
+        .score-input { max-width: 7rem; }
+        .score-input.is-invalid {
+            border-color: #dc3545 !important; /* bootstrap danger red */
+            box-shadow: 0 0 0 0.2rem rgba(220,53,69,0.15) !important;
         }
         h1 { margin-bottom: 0.5rem !important; }
         .card {
@@ -146,24 +160,24 @@
         }
 
         /* Align game name cells with input boxes and remove extra vertical padding */
-        /* Make each table row a flex container so cells stay side-by-side */
-        .table.table-sm tbody tr,
-        .table.table-sm thead tr {
+        /* Make most small tables rows flex for form-like rows, but exclude leaderboard tables so leaderboard keeps normal table layout */
+        .table.table-sm:not(.leaderboard-table) tbody tr,
+        .table.table-sm:not(.leaderboard-table) thead tr {
             display: flex;
             align-items: center;
             gap: 0.5rem;
         }
 
         /* First cell (game name) grows to fill available space */
-        .table.table-sm tbody tr td:first-child,
-        .table.table-sm thead tr th:first-child {
+        .table.table-sm:not(.leaderboard-table) tbody tr td:first-child,
+        .table.table-sm:not(.leaderboard-table) thead tr th:first-child {
             flex: 1 1 auto;
             min-width: 0; /* allow shrinking */
         }
 
-        /* Second cell (input) keeps fixed width so it doesn't wrap under the name */
-        .table.table-sm tbody tr td:nth-child(2),
-        .table.table-sm thead tr th:nth-child(2) {
+        /* Second cell (input) keeps fixed width so it doesn't wrap under the name (exclude leaderboards) */
+        .table.table-sm:not(.leaderboard-table) tbody tr td:nth-child(2),
+        .table.table-sm:not(.leaderboard-table) thead tr th:nth-child(2) {
             flex: 0 0 7rem;
             width: 7rem;
         }
@@ -209,4 +223,173 @@
         .pixel-title strong {
             font-family: inherit;
             font-weight: normal;
+        }
+
+        /* Leaderboard specific styles: ordinal, score, player columns */
+        .leaderboard-table thead th, .leaderboard-table tbody td {
+            vertical-align: middle;
+            border-top: none !important;
+            border-bottom: none !important;
+            padding: 0.35rem 0.5rem;
+        }
+        .leaderboard-table {
+            width: 100%;
+        }
+
+        /* Force leaderboards to use a solid black background for every row (no alternating colors)
+           and apply arcade colors: neon green for text and yellow for the top item. */
+        .leaderboard-table, .leaderboard-table tbody, .leaderboard-table tr, .leaderboard-table td, .leaderboard-table th {
+            background-color: #000000 !important; /* solid black */
+            color: #00ffcc !important; /* neon green taken from provided image */
+        }
+        /* First visible row (top score) should use the arcade yellow from the image */
+        .leaderboard-table tbody tr:first-child td, .leaderboard-table tbody tr:first-child th {
+            color: #ffd400 !important; /* arcade yellow for first place */
+        }
+        /* Remove zebra striping and borders that may contrast with black background */
+        .leaderboard-table.table-striped tbody tr:nth-of-type(odd) td, .leaderboard-table.table-striped tbody tr:nth-of-type(even) td {
+            background-color: #000000 !important;
+        }
+        .leaderboard-table td, .leaderboard-table th { border: none !important; }
+        /* Proportional column widths: ordinal 15%, score 25%, player 60% — adapts with container size */
+        .leaderboard-table thead th.col-ordinal { width: 15%; }
+        .leaderboard-table thead th.col-score { width: 25%; text-align: right; }
+        .leaderboard-table thead th.col-player { width: 60%; text-align: left; }
+
+        /* ordinal styling - use pixel font and uppercase with suffix (1ST, 2ND ...) */
+        .leaderboard-table .ordinal {
+            font-family: 'Press Start 2P', 'Courier New', monospace !important;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: #00ffcc; /* neon-ish color similar to arcade */
+            font-weight: normal;
+        }
+
+        /* score styling - make it bold and aligned similar to image */
+        .leaderboard-table .score {
+            font-family: 'Press Start 2P', 'Courier New', monospace !important;
+            font-size: 0.8rem;
+            text-align: right;
+            color: #ffffff;
+        }
+
+        /* player name styling */
+        .leaderboard-table .player {
+            font-family: 'Press Start 2P', 'Courier New', monospace !important;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            color: #cfe8ff;
+            padding-left: 0.5rem;
+            overflow: hidden; /* cut long names */
+            white-space: nowrap;
+            text-overflow: clip; /* strictly cut after width */
+        }
+
+        /* small helper to append the ordinal suffix (ST, ND, RD, TH) using CSS attr fallback: we'll compute suffix in JS when building rows for dynamic content */
+
+        /* Background for vote page using Galaga image */
+        body.vote-bg {
+            background-image: url('/images/galaga5.jpg');
+            background-size: cover;
+            /* show image from its start (top-left) as requested */
+            background-position: left top;
+            background-repeat: no-repeat;
+            position: relative;
+            color: #fff; /* default text color against background */
+        }
+        /* subtle dark overlay for readability */
+        body.vote-bg::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.45);
+            pointer-events: none;
+            z-index: 0;
+        }
+        /* Ensure container content sits above overlay */
+        .full-height-container { z-index: 1; position: relative; }
+
+        /* Background for results page using scores image */
+        body.scores-bg {
+            background-image: url('/images/galaga5.jpg');
+            background-size: cover;
+            background-position: left top;
+            background-repeat: no-repeat;
+            position: relative;
+            color: #fff;
+        }
+        body.scores-bg::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.6); /* stronger overlay for legibility */
+            pointer-events: none;
+            z-index: 0;
+        }
+        body.scores-bg .full-height-container { z-index: 1; position: relative; }
+
+        /* Higher-specificity rules to ensure horizontal padding overrides Bootstrap utility classes
+           and to make lateral space more noticeable on desktop and mobile. */
+        .container-fluid.full-height-container {
+            padding-left: 2rem !important;   /* stronger default lateral spacing */
+            padding-right: 2rem !important;
+        }
+        @media (min-width: 992px) {
+            .container-fluid.full-height-container {
+                padding-left: 4rem !important; /* more breathing room on wide screens */
+                padding-right: 4rem !important;
+            }
+        }
+        @media (max-width: 575.98px) {
+            .container-fluid.full-height-container {
+                padding-left: 1rem !important; /* keep some spacing on very small screens */
+                padding-right: 1rem !important;
+            }
+        }
+
+        /* Reduce width of the left voting column and increase gap between columns on medium+ screens.
+           We target the specific column classes present in vote.html (.col-md-9 left, .col-md-3 right)
+           and increase the right margin on left column to create visible separation. */
+        @media (min-width: 768px) {
+            .row > .col-md-9 {
+                flex: 0 0 68% !important; /* make left column narrower than default 75% */
+                max-width: 68% !important;
+                margin-right: 2% !important; /* visual gap */
+            }
+            .row > .col-md-3 {
+                flex: 0 0 30% !important; /* right column shares rest */
+                max-width: 30% !important;
+            }
+            /* ensure the cards-wrapper inside left column fills the adjusted column width */
+            .col-md-9 .cards-wrapper { width: 100%; }
+        }
+
+        /* Semi-transparent cards on vote page to improve readability.
+           Scope translucency to left column only via .left-glass so we can
+           keep the right-side card solid using .solid-card. */
+        /* Left column (main vote form) becomes glass */
+        .left-glass.card, .left-glass .card-select {
+            background-color: rgba(0,0,0,0.45) !important; /* dark glass */
+            border: 1px solid rgba(255,255,255,0.08) !important;
+            backdrop-filter: blur(4px);
+            color: #fff;
+        }
+
+        /* But keep the individual selectable buttons opaque/normal inside left column.
+           We override the background and backdrop-filter for .card-select specifically so
+           buttons don't inherit the glass effect visually (only the card container will). */
+        .left-glass .card-select {
+            background-color: transparent !important;
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            backdrop-filter: none !important;
+            color: inherit;
+        }
+
+        /* Right column: solid card (no translucency) */
+        .solid-card {
+            background-color: #ffffff !important;
+            color: #212529 !important; /* default text color */
+            border: 1px solid rgba(0,0,0,0.08) !important;
+            backdrop-filter: none !important;
         }

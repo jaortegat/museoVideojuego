@@ -6,7 +6,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="/css/vote-styles.css" rel="stylesheet">
 </head>
-<body class="bg-light">
+<body class="bg-light scores-bg">
     <div class="container-fluid px-3 full-height-container">
     <!-- Titles fragment -->
     <div th:replace="fragments/titles :: dualTitles"></div>
@@ -44,17 +44,15 @@
                         <div class="col-12 col-sm-6 col-md-4 mb-3" th:each="game : ${videogames}" th:attr="data-game=${game}">
                             <h6 class="mb-1"><span class="visually-hidden">Juego:</span> <span th:text="${game}"></span></h6>
                             <div class="table-responsive mb-2">
-                                <table class="table table-sm table-striped">
-                                    <thead>
-                                        <tr><th>Jugador</th><th>Puntos</th></tr>
-                                    </thead>
+                                <table class="table table-sm table-striped leaderboard-table">
                                     <tbody>
-                                        <tr th:each="ps : ${leaderboards[game]}">
-                                            <td th:text="${ps.playerName}"></td>
-                                            <td th:text="${ps.score}"></td>
+                                        <tr th:each="ps, iterStat : ${leaderboards[game]}">
+                                            <td class="ordinal" th:text="${iterStat.index + 1}"></td>
+                                            <td class="score" th:text="${ps.score}"></td>
+                                            <td class="player" th:text="${ps.playerName}"></td>
                                         </tr>
                                         <tr th:if="${leaderboards[game] == null or #lists.isEmpty(leaderboards[game])}">
-                                            <td colspan="2">Sin puntuaciones</td>
+                                            <td colspan="3">Sin puntuaciones</td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -74,185 +72,7 @@
         var consoleCounts = /*[[${consoleCounts}]]*/ [];
         /*]]>*/
     </script>
-    <script>
-        (function(){
-            var names = Array.isArray(consoleNames) ? consoleNames : [];
-            var counts = Array.isArray(consoleCounts) ? consoleCounts : [];
-            var ctx = document.getElementById('consolePie');
-            if (!ctx) return;
-            var bg = [ '#4e73df','#1cc88a','#36b9cc','#f6c23e','#e74a3b','#858796' ];
-
-            function createChart(initialNames, initialCounts) {
-                var availableHeight = ctx.clientHeight || Math.floor(window.innerHeight * 0.7) || 400;
-                var baseThickness = Math.max(24, Math.floor((availableHeight / Math.max(1, initialNames.length)) * 0.7));
-                return new Chart(ctx, {
-                    type: 'bar',
-                    data: {
-                        labels: initialNames,
-                        datasets: [{
-                            label: 'Votos',
-                            data: initialCounts,
-                            backgroundColor: initialNames.map(function(_,i){ return bg[i % bg.length]; }),
-                            borderWidth: 0,
-                            barThickness: baseThickness
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        indexAxis: 'y',
-                        plugins: {
-                            legend: { display: false },
-                            tooltip: { enabled: false },
-                            datalabels: {
-                                anchor: 'end',
-                                align: 'right',
-                                formatter: function(value) { return value; },
-                                font: { weight: 'bold', size: 12 }
-                            }
-                        },
-                        scales: {
-                            x: { title: { display: true, text: 'Votos' }, beginAtZero: true, precision: 0 },
-                            y: { title: { display: true, text: 'Consolas' } }
-                        }
-                    },
-                    plugins: [ChartDataLabels]
-                });
-            }
-
-            var chart = createChart(names, counts);
-
-            function recalcBarThickness() {
-                var h = ctx.clientHeight || Math.floor(window.innerHeight * 0.7) || 400;
-                var newThickness = Math.max(24, Math.floor((h / Math.max(1, chart.data.labels.length)) * 0.7));
-                chart.data.datasets.forEach(function(ds){ ds.barThickness = newThickness; });
-                chart.update();
-            }
-
-            // Recalculate on resize so bars stay proportionate
-            var resizeTimer = null;
-            window.addEventListener('resize', function(){
-                clearTimeout(resizeTimer);
-                resizeTimer = setTimeout(recalcBarThickness, 150);
-            });
-
-            // preload latest results from server API to ensure chart starts up-to-date
-            fetch('/api/results').then(function(resp){ return resp.json(); }).then(function(json){
-                if (json && Array.isArray(json.results)) {
-                    var res = json.results.filter(function(r){ return r.votes && r.votes > 0; });
-                    var n = res.map(function(r){ return r.console; });
-                    var c = res.map(function(r){ return r.votes; });
-                    chart.data.labels = n;
-                    chart.data.datasets[0].data = c;
-                    chart.data.datasets[0].backgroundColor = n.map(function(_,i){ return bg[i % bg.length]; });
-                    recalcBarThickness();
-                    chart.update();
-                }
-            }).catch(function(e){ console.warn('Failed to preload results', e); });
-
-            // load leaderboards for each game from server so DB contents appear immediately
-            document.querySelectorAll('.col-12.col-sm-6.col-md-4').forEach(function(col){
-                var game = col.getAttribute('data-game');
-                if (!game) return;
-                fetch('/api/leaderboard?game=' + encodeURIComponent(game)).then(function(r){ return r.json(); }).then(function(json){
-                    if (!json || !Array.isArray(json.top)) return;
-                    var tbody = col.querySelector('tbody');
-                    if (!tbody) return;
-                    // clear existing
-                    while (tbody.firstChild) tbody.removeChild(tbody.firstChild);
-                    if (json.top.length === 0) {
-                        var er = document.createElement('tr');
-                        var td = document.createElement('td'); td.setAttribute('colspan','2'); td.textContent = 'Sin puntuaciones';
-                        er.appendChild(td);
-                        tbody.appendChild(er);
-                    } else {
-                        json.top.forEach(function(item){
-                            var tr = document.createElement('tr');
-                            var p = document.createElement('td'); p.textContent = item.player || '';
-                            var s = document.createElement('td'); s.textContent = item.score;
-                            tr.appendChild(p); tr.appendChild(s);
-                            tbody.appendChild(tr);
-                        });
-                    }
-                }).catch(function(e){ console.warn('Failed to load leaderboard for', game, e); });
-            });
-
-            // SSE updates: update chart when vote arrives
-            if (!!window.EventSource) {
-                var es = new EventSource('/results-stream');
-                es.addEventListener('vote', function(evt){
-                    try {
-                        var data = JSON.parse(evt.data);
-                        var name = data.console;
-                        var votes = data.votes;
-                        // remove consoles with zero votes
-                        if (!votes || votes <= 0) {
-                            var remIdx = chart.data.labels.indexOf(name);
-                            if (remIdx !== -1) {
-                                chart.data.labels.splice(remIdx, 1);
-                                chart.data.datasets[0].data.splice(remIdx, 1);
-                                chart.data.datasets[0].backgroundColor.splice(remIdx, 1);
-                                recalcBarThickness();
-                                chart.update();
-                            }
-                            return;
-                        }
-                        var idx = chart.data.labels.indexOf(name);
-                        if (idx === -1) {
-                            chart.data.labels.push(name);
-                            chart.data.datasets[0].data.push(votes);
-                            chart.data.datasets[0].backgroundColor.push(bg[(chart.data.labels.length-1) % bg.length]);
-                        } else {
-                            chart.data.datasets[0].data[idx] = votes;
-                        }
-                        recalcBarThickness();
-                        chart.update();
-                    } catch(e) { console.warn('Invalid SSE payload', evt.data); }
-                });
-                    // listen for live score events and update leaderboards
-                    es.addEventListener('score', function(evt){
-                        try {
-                            var data = JSON.parse(evt.data);
-                            var game = (data.videogame || '').toString().trim().toLowerCase();
-                            var player = data.player;
-                            var score = data.score;
-                            // find the leaderboard column whose heading text matches the videogame
-                            var cols = document.querySelectorAll('.col-12.col-sm-6.col-md-4');
-                            for (var i = 0; i < cols.length; i++) {
-                                var col = cols[i];
-                                var dataGame = col.getAttribute('data-game') || '';
-                                dataGame = dataGame.toString().trim().toLowerCase();
-                                if (dataGame === game) {
-                                    // fetch updated top-10 for this game from server and replace tbody
-                                    fetch('/api/leaderboard?game=' + encodeURIComponent(data.videogame)).then(function(r){ return r.json(); }).then(function(json){
-                                        if (!json || !Array.isArray(json.top)) return;
-                                        var tbody = col.querySelector('tbody');
-                                        if (!tbody) return;
-                                        // clear existing rows
-                                        while (tbody.firstChild) tbody.removeChild(tbody.firstChild);
-                                        if (json.top.length === 0) {
-                                            var er = document.createElement('tr');
-                                            var td = document.createElement('td'); td.setAttribute('colspan','2'); td.textContent = 'Sin puntuaciones';
-                                            er.appendChild(td);
-                                            tbody.appendChild(er);
-                                        } else {
-                                            json.top.forEach(function(item){
-                                                var tr = document.createElement('tr');
-                                                var p = document.createElement('td'); p.textContent = item.player || '';
-                                                var s = document.createElement('td'); s.textContent = item.score;
-                                                tr.appendChild(p); tr.appendChild(s);
-                                                tbody.appendChild(tr);
-                                            });
-                                        }
-                                    }).catch(function(e){ console.warn('Failed to fetch leaderboard', e); });
-                                    break;
-                                }
-                            }
-                        } catch (e) { console.warn('Invalid score SSE payload', evt.data); }
-                    });
-                es.onerror = function(e){ console.warn('SSE error', e); };
-            }
-        })();
-    </script>
+    <script src="/js/results.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

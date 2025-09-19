@@ -75,17 +75,62 @@
         // Build JSON payload: playerName and scores[] by reading inputs named scores[...] in order
         var payload = { playerName: '', scores: [] };
         var pn = form.querySelector('#playerName');
-        if (pn) payload.playerName = pn.value || '';
-        // gather score inputs in DOM order
+        if (pn) payload.playerName = pn.value ? pn.value.trim() : '';
+
+        // validate player name is required
+        if (!payload.playerName) {
+            if (pn) {
+                pn.classList.add('is-invalid');
+                var nf = pn.parentNode.querySelector('.invalid-feedback');
+                if (nf) nf.style.display = 'block';
+                pn.focus();
+            }
+            if (sideFeedback) { sideFeedback.style.display = 'block'; sideFeedback.textContent = 'El nombre del jugador es obligatorio.'; }
+            return;
+        } else {
+            if (pn) {
+                pn.classList.remove('is-invalid');
+                var nf = pn.parentNode.querySelector('.invalid-feedback');
+                if (nf) nf.style.display = 'none';
+            }
+        }
+        // gather score inputs in DOM order and validate: only integers 0..9,999,999 allowed
+        var invalidFound = false;
+        var firstInvalid = null;
+        // clear global feedback
+        var sideFeedback = document.getElementById('sideFormFeedback');
+        if (sideFeedback) { sideFeedback.style.display = 'none'; sideFeedback.textContent = ''; }
+
         form.querySelectorAll('input[name^="scores"]').forEach(function(inp){
+            // clear previous validation state and hide feedback
+            inp.classList.remove('is-invalid');
+            var fb = inp.parentNode.querySelector('.invalid-feedback');
+            if (fb) fb.style.display = 'none';
             var v = inp.value;
             if (v === null || v === undefined || v === '') {
                 payload.scores.push(null);
             } else {
-                var n = parseInt(v, 10);
-                payload.scores.push(isNaN(n) ? null : n);
+                // allow only integer values
+                var num = Number(v);
+                var isInteger = Number.isInteger(num);
+                var withinRange = (num >= 0 && num <= 9999999);
+                if (!isInteger || !withinRange) {
+                    invalidFound = true;
+                    if (!firstInvalid) firstInvalid = inp;
+                    inp.classList.add('is-invalid');
+                    if (fb) fb.style.display = 'block';
+                    payload.scores.push(null);
+                } else {
+                    payload.scores.push(num);
+                }
             }
         });
+
+        if (invalidFound) {
+            if (firstInvalid && firstInvalid.focus) firstInvalid.focus();
+            if (sideFeedback) { sideFeedback.style.display = 'block'; sideFeedback.textContent = 'Corrige los campos marcados antes de enviar.'; }
+            return;
+        }
 
         fetch('/api/scores', {
             method: 'POST',
@@ -95,6 +140,8 @@
             if (resp.ok) {
                 // clear form fields
                 form.reset();
+                // clear any field invalid state
+                form.querySelectorAll('.is-invalid').forEach(function(i){ i.classList.remove('is-invalid'); });
                 // show brief visual confirmation on the button
                 var btn = form.querySelector('.btn');
                 if (btn) {
@@ -102,11 +149,12 @@
                     btn.textContent = 'Enviado';
                     setTimeout(function(){ btn.textContent = old; }, 1400);
                 }
+                if (sideFeedback) { sideFeedback.style.display = 'block'; sideFeedback.classList.remove('text-danger'); sideFeedback.classList.add('text-success'); sideFeedback.textContent = 'Puntuaciones enviadas correctamente.'; setTimeout(function(){ sideFeedback.style.display = 'none'; }, 2500); }
             } else {
-                alert('Error al enviar las puntuaciones');
+                if (sideFeedback) { sideFeedback.style.display = 'block'; sideFeedback.classList.remove('text-success'); sideFeedback.classList.add('text-danger'); sideFeedback.textContent = 'Error al enviar las puntuaciones.'; }
             }
         }).catch(function(){
-            alert('No se pudo conectar con el servidor');
+            if (sideFeedback) { sideFeedback.style.display = 'block'; sideFeedback.classList.remove('text-success'); sideFeedback.classList.add('text-danger'); sideFeedback.textContent = 'No se pudo conectar con el servidor.'; }
         });
     }
 
